@@ -1,0 +1,66 @@
+# Application properties
+spring.application.name=starter
+server.port=8088
+spring.security.user.name=
+spring.security.user.password=
+
+# Datasource properties
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.url=jdbc:postgresql://localhost:5432/base
+spring.datasource.username=
+spring.datasource.password=
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.connection-timeout=60000
+
+# Sql queries logging
+spring.jpa.show-sql=true
+
+# Gmail properties
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=
+spring.mail.password=t
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# AES properties
+jwt.aes.key=
+jwt.aes.iv=
+
+# Hashing properties
+app.hashing.key=
+app.hashing.iv=
+
+# Security
+logging.level.org.springframework.security=info
+
+#RabbitMQ
+spring.rabbitmq.host=localhostspring.rabbitmq.port=5672
+spring.rabbitmq.username=
+spring.rabbitmq.password=
+spring.rabbitmq.virtual-host=/
+
+#Gmail
+application.defaultMailClient=
+application.google.credentials.json=
+
+#Redis
+spring.cache.type=redis
+spring.data.redis.host=
+spring.data.redis.port=
+spring.data.redis.password=
+
+#Aws
+aws.s3.bucket-name=
+aws.s3.access-key=
+aws.s3.secret-key=
+
+#OpenApi
+springdoc.api-docs.path=/v3/api-docs
+springdoc.swagger-ui.path=/swagger-ui
+
+#Security
+jwt.rsa.path.private-key=D:\\Key\\starter\\private_key.pem
+jwt.rsa.path.public-key=D:\\Key\\starter\\public_key.pem
+jwt.expiration-time-in-second=864000
+jwt.clock-skew-in-second=300

@@ -1,0 +1,30 @@
+package com.yoyodev.starter.Common.Utils;
+
+import com.yoyodev.starter.Common.Enumerate.ErrorCode;
+import com.yoyodev.starter.Common.Enumerate.UserStatus;
+import com.yoyodev.starter.Exception.BaseAuthenticationException;
+
+import java.lang.reflect.Method;
+
+public class AuthUserHelper {
+    public static <T> void validateUserStatus(T delegateUser) {
+        if (delegateUser == null) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND, "User not found");
+        Class<?> clazz = delegateUser.getClass();
+        boolean userVerified;
+        UserStatus status;
+        try {
+            Method getStatus = clazz.getMethod("getStatus");
+            status = (UserStatus) getStatus.invoke(delegateUser);
+            if (status == null) throw new BaseAuthenticationException(ErrorCode.DEFAULT, "User status unknown");
+            Method getVerifiedAt = clazz.getMethod("getVerifiedAt");
+            userVerified = getVerifiedAt.invoke(delegateUser) != null;
+        }
+        catch (Exception e) {
+            throw new BaseAuthenticationException(ErrorCode.DEFAULT, "Failed to validate user status: " + e.getMessage());
+        }
+
+        if (status == UserStatus.Pending || !userVerified) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_VERIFIED, "User not verified");
+        if (status == UserStatus.Locked) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_LOCKED, "User locked");
+        if (status == UserStatus.Deactivated) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_DEACTIVATED, "User deactivated");
+    }
+}
