@@ -5,8 +5,8 @@ import lombok.Getter;
 @Getter
 public enum PermissionLevel implements TransformableEnum<Integer> {
     None(0),
-    Get(1),
-    Get_Update(2);
+    Read(1),
+    Read_Write(2);
     private final int value;
 
     PermissionLevel(int value) {
