@@ -7,12 +7,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.util.HashSet;
 import java.util.Set;
 
 @Setter
 @Getter
 @Entity
-@Table(name = "users")
+@Table(name = "user")
 @AllArgsConstructor
 @NoArgsConstructor
 public class User extends AbstractAuditEntity {
@@ -30,9 +31,9 @@ public class User extends AbstractAuditEntity {
 
     private Integer status;
 
-    @ManyToMany
-    @JoinTable(name = "user_has_permission",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "permission_id"))
-    private Set<Permission> permissions;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserRole> userRoles = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserPermission> userPermissions = new HashSet<>();
 }

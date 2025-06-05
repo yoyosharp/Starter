@@ -1,6 +1,9 @@
 package com.yoyodev.starter.Model.DTO;
 
+import com.yoyodev.starter.Common.Enumerate.PermissionLevel;
+
 public record SimplePermission(String name,
-                               String module,
-                               String functionName) {
+                               String moduleId,
+                               String functionId,
+                               PermissionLevel level) {
 }

@@ -1,22 +1,25 @@
 package com.yoyodev.starter.Repositories;
 
 import com.yoyodev.starter.Entities.User;
-import com.yoyodev.starter.Model.DTO.UserPrincipal;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-public interface AuthUserRepository extends JpaRepository<User, Long>, UserRepository {
-    Optional<UserPrincipal> findUserAuthById(Long id);
-
-    Optional<UserPrincipal> findUserPrincipalByUsername(String username);
+@Repository
+public interface AuthUserRepository {
 
     @Query("""
             SELECT u FROM User u
-            LEFT JOIN FETCH u.permissions r
-            WHERE u.username = ?1
-            OR u.email = ?1
+            LEFT JOIN FETCH u.userPermissions up
+            LEFT JOIN FETCH up.permission
+            LEFT JOIN FETCH u.userRoles ur
+            LEFT JOIN FETCH ur.role r
+            LEFT JOIN FETCH r.rolePermissions rp
+            LEFT JOIN FETCH rp.permission
+            WHERE u.username = :identity
+            OR u.email = :identity
             """)
-    Optional<UserPrincipal> findUserAuthByIdentity(String identity);
+    Optional<User> findUserAuthByIdentity(@Param("identity") String identity);
 }

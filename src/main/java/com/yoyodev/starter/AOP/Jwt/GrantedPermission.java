@@ -1,40 +1,32 @@
 package com.yoyodev.starter.AOP.Jwt;
 
-import com.yoyodev.starter.Common.Enumerate.Converter.EnumConverter;
-import com.yoyodev.starter.Common.Enumerate.EnabledStatus;
 import com.yoyodev.starter.Common.Enumerate.PermissionLevel;
-import com.yoyodev.starter.Entities.Permission;
+import com.yoyodev.starter.Model.DTO.SimplePermission;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 
+@RequiredArgsConstructor
 public class GrantedPermission implements GrantedAuthority {
-    private final Permission permission;
+    private final SimplePermission permission;
     @Override
     public String getAuthority() {
-        return permission.getName();
+        return permission.moduleId() + ":" + permission.functionId();
     }
 
-    public GrantedPermission(Permission permission) {
-        if (EnumConverter.convert(permission.getEnabled(), EnabledStatus.class) == EnabledStatus.Enabled) {
-            this.permission = permission;
-        }
-        else {
-            this.permission = null;
-        }
-    }
 
     public String getModule() {
-        return permission == null ? null : permission.getModule();
+        return permission == null ? null : permission.moduleId();
     }
 
     public String getFunctionName() {
-        return permission == null ? null : permission.getFunctionName();
+        return permission == null ? null : permission.functionId();
     }
 
-    public Integer getLevel() {
-        return permission == null ? null : permission.getLevel();
+    public PermissionLevel getLevel() {
+        return permission == null ? null : permission.level();
     }
 
     public boolean hasPrivilege(PermissionLevel level) {
-        return permission != null && permission.getLevel() >= level.getValue();
+        return permission != null && permission.level().getValue() >= level.getValue();
     }
 }

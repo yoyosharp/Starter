@@ -1,15 +1,25 @@
 package com.yoyodev.starter.Service.impl;
 
 import com.yoyodev.starter.AOP.Jwt.JwtProvider;
+import com.yoyodev.starter.Common.Enumerate.Converter.EnumConverter;
+import com.yoyodev.starter.Common.Enumerate.UserStatus;
+import com.yoyodev.starter.Entities.User;
+import com.yoyodev.starter.Model.DTO.SimplePermission;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;
 import com.yoyodev.starter.Model.Request.AuthUserRequest;
 import com.yoyodev.starter.Model.Response.AuthModel;
 import com.yoyodev.starter.Repositories.UserRepository;
 import com.yoyodev.starter.Service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -27,17 +37,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional
     public UserPrincipal getUserPrincipalByUsername(String username) {
-//        UserPrincipal user = userRepository.findUserPrincipalByUsername(username).orElse(null);
-//        AuthUserHelper.validateUserStatus(user);
-//        Set<SimplePermission> permissions = new HashSet<>();
-//        if (user.getPermissions() != null) {
-//            permissions = user.getPermissions().stream()
-//                    .filter(Objects::nonNull)
-//                    .filter(permission -> permission.getEnabled() == EnabledStatus.Enabled)
-//                    .map(permission -> new SimplePermission(permission.getName(), permission.getModule(), permission.getFunctionName())).collect(Collectors.toSet());
-//        }
-//        return new UserPrincipal(user.getId(), user.getUsername(), user.getStatus(), user.getVerifiedAt() != null, permissions);
-        return null;
+        User user = userRepository.findUserAuthByIdentity(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        Set<SimplePermission> permissions = new HashSet<>();
+
+        boolean isVerified = user.getVerifiedAt() != null && user.getVerifiedAt().before(Timestamp.valueOf(LocalDateTime.now()));
+        UserStatus status = (UserStatus) EnumConverter.convert(user.getStatus(), UserStatus.class);
+
+
+        return new UserPrincipal(user.getId(), user.getUsername(), status, isVerified, permissions);
     }
 
     @Override
