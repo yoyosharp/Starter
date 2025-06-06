@@ -22,13 +22,9 @@ public class User extends AbstractAuditEntity {
     private Long id;
 
     private String password;
-
     private String username;
-
     private String email;
-
     private Timestamp verifiedAt;
-
     private Integer status;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

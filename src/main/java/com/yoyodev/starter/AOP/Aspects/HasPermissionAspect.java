@@ -7,10 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Aspect
 @Component
@@ -19,13 +21,21 @@ public class HasPermissionAspect {
 
     @Around("@annotation(hasPermission)")
     public Object validatePermission(ProceedingJoinPoint joinPoint, HasPermission hasPermission) throws Throwable {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            log.error("Not authenticated");
+            throw new BaseAuthenticationException(ErrorCode.AUTH_NOT_AUTHENTICATED, "Not authenticated");
+        }
 
-        List<GrantedPermission> authorities = (List<GrantedPermission>) SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+        Set<GrantedPermission> authorities = auth.getAuthorities().stream()
+                .filter(GrantedPermission.class::isInstance)
+                .map(GrantedPermission.class::cast)
+                .collect(Collectors.toSet());
         boolean accepted = authorities.stream()
                 .anyMatch(authority ->
-                        authority.getModule().equals(hasPermission.module())
-                                && authority.getFunctionName().equals(hasPermission.functionName())
-                                && authority.hasPrivilege(hasPermission.level()));
+                        authority.getModule().equals(hasPermission.module()) &&
+                                authority.getFunctionName().equals(hasPermission.functionName()) &&
+                                (authority.hasPrivilege(hasPermission.level()) || !authority.isEnabled()));
 
         if (!accepted) {
             log.error("No permission, username: {}, module: {}, functionName: {}",

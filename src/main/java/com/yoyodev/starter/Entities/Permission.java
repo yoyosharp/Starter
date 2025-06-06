@@ -17,9 +17,8 @@ public class Permission extends AbstractAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private String name;
     private String moduleId;
     private String functionId;
-
     private int enabledFlag; // 0 = disabled, 1 = enabled
 }

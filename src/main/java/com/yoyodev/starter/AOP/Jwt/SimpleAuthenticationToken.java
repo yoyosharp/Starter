@@ -5,20 +5,20 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 
 import javax.security.auth.Subject;
 import java.io.Serial;
-import java.util.List;
+import java.util.Set;
 
 public class SimpleAuthenticationToken extends AbstractAuthenticationToken {
     @Serial
     private static final long serialVersionUID = 100L;
     private final UserPrincipal principal;
 
-    private SimpleAuthenticationToken(UserPrincipal principal, List<GrantedPermission> permissions) {
+    private SimpleAuthenticationToken(UserPrincipal principal, Set<GrantedPermission> permissions) {
         super(permissions);
         this.principal = principal;
         super.setAuthenticated(true);
     }
 
-    public static SimpleAuthenticationToken authenticated(UserPrincipal principal, List<GrantedPermission> permissions) {
+    public static SimpleAuthenticationToken authenticated(UserPrincipal principal, Set<GrantedPermission> permissions) {
         return new SimpleAuthenticationToken(principal, permissions);
     }
 

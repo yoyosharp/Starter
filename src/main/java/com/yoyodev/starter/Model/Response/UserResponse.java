@@ -3,7 +3,6 @@ package com.yoyodev.starter.Model.Response;
 import com.yoyodev.starter.Common.Enumerate.UserStatus;
 import com.yoyodev.starter.Model.DTO.SimplePermission;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;
-import com.yoyodev.starter.Repositories.Projections.UserAuthProjection;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

@@ -1,11 +1,15 @@
 package com.yoyodev.starter.Entities;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "role_permission", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"role_id", "permission_id"})
 })
+@Getter
+@Setter
 public class RolePermission extends AbstractAuditEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

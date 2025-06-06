@@ -2,8 +2,12 @@ package com.yoyodev.starter.Service.impl;
 
 import com.yoyodev.starter.AOP.Jwt.JwtProvider;
 import com.yoyodev.starter.Common.Enumerate.Converter.EnumConverter;
+import com.yoyodev.starter.Common.Enumerate.EnabledStatus;
+import com.yoyodev.starter.Common.Enumerate.ErrorCode;
+import com.yoyodev.starter.Common.Enumerate.PermissionLevel;
 import com.yoyodev.starter.Common.Enumerate.UserStatus;
 import com.yoyodev.starter.Entities.User;
+import com.yoyodev.starter.Exception.BaseAuthenticationException;
 import com.yoyodev.starter.Model.DTO.SimplePermission;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;
 import com.yoyodev.starter.Model.Request.AuthUserRequest;
@@ -11,7 +15,6 @@ import com.yoyodev.starter.Model.Response.AuthModel;
 import com.yoyodev.starter.Repositories.UserRepository;
 import com.yoyodev.starter.Service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,25 +32,40 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
 
-//    @Override
-//    @Transactional(readOnly = true)
-//    public UserAuthProjection getUserAuthById(Long id) {
-//        return userRepository.findUserAuthById(id).orElse(null);
-//    }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public UserPrincipal getUserPrincipalByUsername(String username) {
         User user = userRepository.findUserAuthByIdentity(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND.getValue()));
 
-        Set<SimplePermission> permissions = new HashSet<>();
+        Map<String, SimplePermission> userPermissions = user.getUserPermissions().stream()
+                .map(up -> new SimplePermission(up.getPermission().getName(),
+                        up.getPermission().getModuleId(),
+                        up.getPermission().getFunctionId(),
+                        EnumConverter.convert(up.getLevel(), PermissionLevel.class),
+                        EnumConverter.convert(up.getPermission().getEnabledFlag(), EnabledStatus.class)))
+                .collect(Collectors.toMap(SimplePermission::getEffectiveName, permission -> permission));
+
+        Map<String, SimplePermission> rolePermissions = user.getUserRoles().stream()
+                .flatMap(ur -> ur.getRole().getRolePermissions().stream()
+                        .map(rp -> new SimplePermission(rp.getPermission().getName(),
+                                rp.getPermission().getModuleId(),
+                                rp.getPermission().getFunctionId(),
+                                EnumConverter.convert(rp.getLevel(), PermissionLevel.class),
+                                EnumConverter.convert(rp.getPermission().getEnabledFlag(), EnabledStatus.class))))
+                .collect(Collectors.toMap(SimplePermission::getEffectiveName,
+                        permission -> permission,
+                        (p1, p2) -> p1.level().getValue() >= p2.level().getValue() ? p1 : p2));
 
         boolean isVerified = user.getVerifiedAt() != null && user.getVerifiedAt().before(Timestamp.valueOf(LocalDateTime.now()));
-        UserStatus status = (UserStatus) EnumConverter.convert(user.getStatus(), UserStatus.class);
 
+        UserStatus status = EnumConverter.convert(user.getStatus(), UserStatus.class);
+        if (status == UserStatus.Pending || !isVerified) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_VERIFIED.getValue());
+        if (status == UserStatus.Locked) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_LOCKED.getValue());
+        if (status == UserStatus.Deactivated) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_DEACTIVATED.getValue());
 
-        return new UserPrincipal(user.getId(), user.getUsername(), status, isVerified, permissions);
+        return new UserPrincipal(user.getId(), user.getUsername(), status, isVerified, new HashSet<>(rolePermissions.values()));
     }
 
     @Override
