@@ -33,7 +33,7 @@ WITH new_user AS (
     VALUES (
         'admin',
         'admin@example.com',
-        '{bcrypt}$2a$10$XptfskLsT1SL/bOzZLkJM.3tfbg/2CQDszCQbJ8Bwx0A5MO/UzQaO', -- admin123
+        '$2a$10$XptfskLsT1SL/bOzZLkJM.3tfbg/2CQDszCQbJ8Bwx0A5MO/UzQaO', -- admin123
         1,
         NOW(),
         NOW()
