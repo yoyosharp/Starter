@@ -6,7 +6,7 @@ import com.yoyodev.starter.Common.Enumerate.EnabledStatus;
 import com.yoyodev.starter.Common.Enumerate.ErrorCode;
 import com.yoyodev.starter.Common.Enumerate.PermissionLevel;
 import com.yoyodev.starter.Common.Enumerate.UserStatus;
-import com.yoyodev.starter.Entities.User;
+import com.yoyodev.starter.Entities.Projection.UserAuthProjection;
 import com.yoyodev.starter.Exception.BaseAuthenticationException;
 import com.yoyodev.starter.Model.DTO.SimplePermission;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;
@@ -22,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -31,32 +31,47 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
-
+    private final String GENERATED_PERMISSION_NAME = "Generated";
 
     @Override
     @Transactional(readOnly = true)
     public UserPrincipal getUserPrincipalByUsername(String username) {
-        User user = userRepository.findUserAuthByIdentity(username)
-                .orElseThrow(() -> new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND.getValue()));
+        List<UserAuthProjection> userAuthWithPermissions;
+        userAuthWithPermissions = userRepository.findUserAuthByIdentity(username);
+        if (userAuthWithPermissions.isEmpty()) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND.getValue());
 
-        Map<String, SimplePermission> userPermissions = user.getUserPermissions().stream()
-                .map(up -> new SimplePermission(up.getPermission().getName(),
-                        up.getPermission().getModuleId(),
-                        up.getPermission().getFunctionId(),
-                        EnumConverter.convert(up.getLevel(), PermissionLevel.class),
-                        EnumConverter.convert(up.getPermission().getEnabledFlag(), EnabledStatus.class)))
-                .collect(Collectors.toMap(SimplePermission::getEffectiveName, permission -> permission));
+        Set<SimplePermission> permissions = new HashSet<>();
+        userAuthWithPermissions.forEach(row -> {
+            SimplePermission permission = new SimplePermission(GENERATED_PERMISSION_NAME,
+                    row.getModuleId(),
+                    row.getFunctionId(),
+                    EnumConverter.convert(row.getLevel(), PermissionLevel.class),
+                    EnumConverter.convert(row.getEnabledFlag(), EnabledStatus.class));
+            permissions.add(permission);
+        });
 
-        Map<String, SimplePermission> rolePermissions = user.getUserRoles().stream()
-                .flatMap(ur -> ur.getRole().getRolePermissions().stream()
-                        .map(rp -> new SimplePermission(rp.getPermission().getName(),
-                                rp.getPermission().getModuleId(),
-                                rp.getPermission().getFunctionId(),
-                                EnumConverter.convert(rp.getLevel(), PermissionLevel.class),
-                                EnumConverter.convert(rp.getPermission().getEnabledFlag(), EnabledStatus.class))))
-                .collect(Collectors.toMap(SimplePermission::getEffectiveName,
-                        permission -> permission,
-                        (p1, p2) -> p1.level().getValue() >= p2.level().getValue() ? p1 : p2));
+//        User user = userRepository.findUserByIdentity(username)
+//                .orElseThrow(() -> new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND.getValue()));
+//        Map<String, SimplePermission> userPermissions = user.getUserPermissions().stream()
+//                .map(up -> new SimplePermission(up.getPermission().getName(),
+//                        up.getPermission().getModuleId(),
+//                        up.getPermission().getFunctionId(),
+//                        EnumConverter.convert(up.getLevel(), PermissionLevel.class),
+//                        EnumConverter.convert(up.getPermission().getEnabledFlag(), EnabledStatus.class)))
+//                .collect(Collectors.toMap(SimplePermission::getEffectiveName, permission -> permission));
+//
+//        Map<String, SimplePermission> rolePermissions = user.getUserRoles().stream()
+//                .flatMap(ur -> ur.getRole().getRolePermissions().stream()
+//                        .map(rp -> new SimplePermission(rp.getPermission().getName(),
+//                                rp.getPermission().getModuleId(),
+//                                rp.getPermission().getFunctionId(),
+//                                EnumConverter.convert(rp.getLevel(), PermissionLevel.class),
+//                                EnumConverter.convert(rp.getPermission().getEnabledFlag(), EnabledStatus.class))))
+//                .collect(Collectors.toMap(SimplePermission::getEffectiveName,
+//                        permission -> permission,
+//                        (p1, p2) -> p1.level().getValue() >= p2.level().getValue() ? p1 : p2));
+
+        var user = userAuthWithPermissions.get(0);
 
         boolean isVerified = user.getVerifiedAt() != null && user.getVerifiedAt().before(Timestamp.valueOf(LocalDateTime.now()));
 
@@ -65,7 +80,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (status == UserStatus.Locked) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_LOCKED.getValue());
         if (status == UserStatus.Deactivated) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_DEACTIVATED.getValue());
 
-        return new UserPrincipal(user.getId(), user.getUsername(), status, isVerified, new HashSet<>(rolePermissions.values()));
+        return new UserPrincipal(user.getUserId(), user.getUsername(), status, isVerified, permissions);
     }
 
     @Override
