@@ -12,7 +12,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "role")
+@Table(name = "mst_role")
 public class Role extends AbstractAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

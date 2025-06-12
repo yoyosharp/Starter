@@ -1,8 +1,7 @@
 package com.yoyodev.starter.Config;
 
-import com.yoyodev.starter.AOP.Jwt.JwtEntryPoint;
-import com.yoyodev.starter.Common.Constants.EndpointConstants;
 import com.yoyodev.starter.AOP.Jwt.JwtFilter;
+import com.yoyodev.starter.Common.Constants.EndpointConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +33,7 @@ public class SecurityConfig {
             "/error"
     };
     private final JwtFilter jwtFilter;
-    private final JwtEntryPoint authenticationEntryPoint;
+//    private final JwtEntryPoint authenticationEntryPoint;
 
     @Bean
     @Order(1)
@@ -62,8 +61,8 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
                         .anyRequest().authenticated())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling(handler -> handler.authenticationEntryPoint(authenticationEntryPoint));
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+//                .exceptionHandling(handler -> handler.authenticationEntryPoint(authenticationEntryPoint));
         return http.build();
     }
 

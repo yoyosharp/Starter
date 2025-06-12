@@ -1,8 +1,5 @@
 package com.yoyodev.starter.Common.Enumerate;
 
-import lombok.Getter;
-
-@Getter
 public enum PermissionLevel implements TransformableEnum<Integer> {
     None(0),
     Read(1),
@@ -11,5 +8,10 @@ public enum PermissionLevel implements TransformableEnum<Integer> {
 
     PermissionLevel(int value) {
         this.value = value;
+    }
+
+    @Override
+    public Integer getValue() {
+        return value;
     }
 }

@@ -1,19 +1,16 @@
 package com.yoyodev.starter.AOP.Logging;
 
 import jakarta.annotation.Nonnull;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.ContentCachingResponseWrapper;
+
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -22,8 +19,6 @@ import java.util.UUID;
 
 import static com.yoyodev.starter.Common.Constants.RequestContextAttributes.*;
 
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 public class CustomAuditingFilter extends OncePerRequestFilter {
 
@@ -35,6 +30,7 @@ public class CustomAuditingFilter extends OncePerRequestFilter {
         if (RequestContextHolder.getRequestAttributes() == null) {
             RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
         }
+        ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
 
         String requestId = UUID.randomUUID().toString();
         RequestContextHolder.getRequestAttributes().setAttribute(REQUEST_ID_ATTRIBUTE, requestId, ServletRequestAttributes.SCOPE_REQUEST);
@@ -47,22 +43,26 @@ public class CustomAuditingFilter extends OncePerRequestFilter {
         String userAgent = request.getHeader("User-Agent");
 
         log.info("""
-                \nIncoming request: [{}]
-                          Method: {}
-                             URL: {}
-                  Remote address: {}
-                      User-Agent: {}""",
+                        \nIncoming request: [{}]
+                                  Method: {}
+                                     URL: {}
+                          Remote address: {}
+                              User-Agent: {}""",
                 requestId, method, fullUrl, remoteAddr, userAgent);
         try {
             filterChain.doFilter(request, response);
         } finally {
-            int status = response.getStatus();
-            if (status >= 200 && status < 300) {
-                log.info("Request completed: [{}] with status {}", requestId, status);
+            if (wrappedResponse.getStatus() < 200 || wrappedResponse.getStatus() > 299) {
+                log.warn("Request [{}] incompleted with status: {}",
+                        requestId,
+                        wrappedResponse.getStatus());
             } else {
-                log.warn("Request incompleted: [{}] with status {}", requestId, status);
+                log.info("Request [{}] completed with status: {}",
+                        requestId,
+                        wrappedResponse.getStatus());
             }
-            RequestContextHolder.resetRequestAttributes();
+
+            wrappedResponse.copyBodyToResponse();
         }
     }
 

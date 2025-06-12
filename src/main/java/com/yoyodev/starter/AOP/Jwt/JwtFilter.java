@@ -46,14 +46,14 @@ public class JwtFilter extends OncePerRequestFilter {
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
-        catch (JOSEException | BadJWTException | BaseAuthenticationException jwtException) {
-            throw new JwtVerificationException(jwtException.getMessage());
-        }
-        catch (Exception e) {
+            filterChain.doFilter(request, response);
+        } catch (JOSEException | BadJWTException | BaseAuthenticationException jwtException) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(jwtException.getMessage());
+            response.getWriter().flush();
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
-        filterChain.doFilter(request, response);
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {

@@ -6,7 +6,7 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
-import com.yoyodev.starter.Model.DTO.UserPrincipal;
+import com.yoyodev.starter.Entities.Projection.UserProjection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,10 +33,10 @@ public class JwtProvider {
     @Value("${jwt.clock-skew-in-second}")
     private Integer clockSkewInSecond;
 
-    public String generateToken(UserPrincipal userPrincipal) throws Exception {
+    public String generateToken(UserProjection user) throws Exception {
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
                 .issuer(issuer)
-                .subject(userPrincipal.username())
+                .subject(user.getUsername())
                 .issueTime(new Date())
                 .expirationTime(new Date(System.currentTimeMillis() + expirationTimeInSecond * 1000))
                 .build();

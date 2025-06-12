@@ -1,13 +1,16 @@
 package com.yoyodev.starter.Service.impl;
 
 import com.yoyodev.starter.AOP.Jwt.JwtProvider;
+import com.yoyodev.starter.Common.Constants.Constants;
 import com.yoyodev.starter.Common.Enumerate.Converter.EnumConverter;
 import com.yoyodev.starter.Common.Enumerate.EnabledStatus;
 import com.yoyodev.starter.Common.Enumerate.ErrorCode;
 import com.yoyodev.starter.Common.Enumerate.PermissionLevel;
 import com.yoyodev.starter.Common.Enumerate.UserStatus;
 import com.yoyodev.starter.Entities.Projection.UserAuthProjection;
+import com.yoyodev.starter.Entities.Projection.UserProjection;
 import com.yoyodev.starter.Exception.BaseAuthenticationException;
+import com.yoyodev.starter.Exception.BaseException;
 import com.yoyodev.starter.Model.DTO.SimplePermission;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;
 import com.yoyodev.starter.Model.Request.AuthUserRequest;
@@ -36,20 +39,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional(readOnly = true)
     public UserPrincipal getUserPrincipalByUsername(String username) {
-        List<UserAuthProjection> userAuthWithPermissions;
-        userAuthWithPermissions = userRepository.findUserAuthByIdentity(username);
-        if (userAuthWithPermissions.isEmpty()) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND.getValue());
-
-        Set<SimplePermission> permissions = new HashSet<>();
-        userAuthWithPermissions.forEach(row -> {
-            SimplePermission permission = new SimplePermission(GENERATED_PERMISSION_NAME,
-                    row.getModuleId(),
-                    row.getFunctionId(),
-                    EnumConverter.convert(row.getLevel(), PermissionLevel.class),
-                    EnumConverter.convert(row.getEnabledFlag(), EnabledStatus.class));
-            permissions.add(permission);
-        });
-
 //        User user = userRepository.findUserByIdentity(username)
 //                .orElseThrow(() -> new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND.getValue()));
 //        Map<String, SimplePermission> userPermissions = user.getUserPermissions().stream()
@@ -71,34 +60,56 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 //                        permission -> permission,
 //                        (p1, p2) -> p1.level().getValue() >= p2.level().getValue() ? p1 : p2));
 
-        var user = userAuthWithPermissions.get(0);
+        List<UserAuthProjection> userAuthWithPermissions= userRepository.findUserAuthByUsername(username);
+        if (userAuthWithPermissions.isEmpty()) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND.getValue());
 
-        boolean isVerified = user.getVerifiedAt() != null && user.getVerifiedAt().before(Timestamp.valueOf(LocalDateTime.now()));
+        Set<SimplePermission> permissions = new HashSet<>();
+        userAuthWithPermissions.forEach(row -> {
+            SimplePermission permission = new SimplePermission(GENERATED_PERMISSION_NAME,
+                    row.getModuleId(),
+                    row.getFunctionId(),
+                    EnumConverter.convert(row.getLevel(), PermissionLevel.class),
+                    EnumConverter.convert(row.getEnabledFlag(), EnabledStatus.class));
+            permissions.add(permission);
+        });
 
-        UserStatus status = EnumConverter.convert(user.getStatus(), UserStatus.class);
-        if (status == UserStatus.Pending || !isVerified) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_VERIFIED.getValue());
-        if (status == UserStatus.Locked) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_LOCKED.getValue());
-        if (status == UserStatus.Deactivated) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_DEACTIVATED.getValue());
+        UserAuthProjection user = userAuthWithPermissions.getFirst();
+        validateUserActiveStatus(user.getVerifiedAt(), user.getStatus());
 
-        return new UserPrincipal(user.getUserId(), user.getUsername(), status, isVerified, permissions);
+        return new UserPrincipal(user.getUserId(), user.getUsername(), UserStatus.Active, true, permissions);
     }
 
     @Override
     public AuthModel login(AuthUserRequest request) {
-//        UserAuthProjection user = userRepository.findUserAuthByIdentity(request.identity()).orElse(null);
-//        AuthUserHelper.validateUserStatus(user);
-//        if (!passwordEncoder.matches(request.password(), user.getPassword()))
-//            throw new BaseAuthenticationException(ErrorCode.AUTH_INVALID_CREDENTIAL, "Invalid credentials");
-//        try {
-//            String accessToken = jwtProvider.generateToken(user);
-//            if (request.rememberMe() == null || !request.rememberMe()) {
-//                return new AuthModel(accessToken, null);
-//            }
-//            String refreshToken = "123";
-//            return new AuthModel(accessToken, refreshToken);
-//        } catch (Exception e) {
-//            throw new BaseException(ErrorCode.AUTH_JWT_PROCESSING_ERROR, e.getMessage());
-//        }
-        return null;
+        UserProjection user = userRepository.findUserByIdentity(request.identity())
+                .orElseThrow(() -> new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND.getValue()));
+        if (!passwordEncoder.matches(request.password(), user.getPassword()))
+            throw new BaseAuthenticationException(ErrorCode.AUTH_INVALID_CREDENTIAL, "Invalid credentials");
+
+        validateUserActiveStatus(user.getVerifiedAt(), user.getStatus());
+
+        try {
+            String accessToken = jwtProvider.generateToken(user);
+            String refreshToken = getRefreshToken(request.rememberMe());
+            return new AuthModel(accessToken, refreshToken);
+        } catch (Exception e) {
+            throw new BaseException(ErrorCode.AUTH_JWT_PROCESSING_ERROR, e.getMessage());
+        }
+    }
+
+    private String getRefreshToken(Boolean rememberMe) {
+        if (rememberMe == null || !rememberMe) {
+            return Constants.EMPTY_STRING;
+        }
+        return "123";
+    }
+
+    private void validateUserActiveStatus(Timestamp verifiedAt, Integer userStatus) {
+        boolean isVerified = verifiedAt != null && verifiedAt.before(Timestamp.valueOf(LocalDateTime.now()));
+
+        UserStatus status = EnumConverter.convert(userStatus, UserStatus.class);
+        if (status == UserStatus.Pending || !isVerified) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_VERIFIED.getValue());
+        if (status == UserStatus.Locked) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_LOCKED.getValue());
+        if (status == UserStatus.Deactivated) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_DEACTIVATED.getValue());
     }
 }

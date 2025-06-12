@@ -1,8 +1,5 @@
 package com.yoyodev.starter.Common.Enumerate;
 
-import lombok.Getter;
-
-@Getter
 public enum EnabledStatus implements TransformableEnum<Integer> {
     Enabled(1),
     Disabled(0);
@@ -11,5 +8,10 @@ public enum EnabledStatus implements TransformableEnum<Integer> {
 
     EnabledStatus(int value) {
         this.value = value;
+    }
+
+    @Override
+    public Integer getValue() {
+        return value;
     }
 }

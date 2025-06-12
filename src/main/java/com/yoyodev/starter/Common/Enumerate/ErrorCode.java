@@ -1,8 +1,5 @@
 package com.yoyodev.starter.Common.Enumerate;
 
-import lombok.Getter;
-
-@Getter
 public enum ErrorCode implements TransformableEnum<String> {
     /* The error code should be unique and follow this format:
         "#" + [2 digit]<module> + [2 digit]<function> + [2 digit]<identifier>
@@ -34,6 +31,11 @@ public enum ErrorCode implements TransformableEnum<String> {
 
     ErrorCode(String value) {
         this.value = value;
+    }
+
+    @Override
+    public String getValue() {
+        return value;
     }
 
 }

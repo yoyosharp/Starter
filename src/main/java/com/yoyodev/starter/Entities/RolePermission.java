@@ -23,6 +23,7 @@ public class RolePermission extends AbstractAuditEntity{
     @JoinColumn(name = "permission_id", nullable = false)
     private Permission permission;
 
+    @Column(name = "permission_level")
     private int level; // 0 = none, 1 = read, 2 = read_write
 }
 

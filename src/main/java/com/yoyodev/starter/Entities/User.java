@@ -13,7 +13,7 @@ import java.util.Set;
 @Setter
 @Getter
 @Entity
-@Table(name = "user")
+@Table(name = "mst_user")
 @AllArgsConstructor
 @NoArgsConstructor
 public class User extends AbstractAuditEntity {
@@ -25,6 +25,7 @@ public class User extends AbstractAuditEntity {
     private String username;
     private String email;
     private Timestamp verifiedAt;
+    @Column(name = "user_status")
     private Integer status;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
