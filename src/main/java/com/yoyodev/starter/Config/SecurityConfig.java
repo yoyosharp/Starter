@@ -3,7 +3,6 @@ package com.yoyodev.starter.Config;
 import com.yoyodev.starter.AOP.Jwt.JwtFilter;
 import com.yoyodev.starter.Common.Constants.EndpointConstants;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -75,12 +74,5 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
-    }
-
-    @Bean
-    public FilterRegistrationBean<JwtFilter> disableJwtFilterAutoRegistration(JwtFilter jwtFilter) {
-        FilterRegistrationBean<JwtFilter> registrationBean = new FilterRegistrationBean<>(jwtFilter);
-        registrationBean.setEnabled(false);
-        return registrationBean;
     }
 }

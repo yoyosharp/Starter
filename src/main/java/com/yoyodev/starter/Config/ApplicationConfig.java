@@ -1,5 +1,6 @@
 package com.yoyodev.starter.Config;
 
+import com.yoyodev.starter.AOP.Jwt.JwtFilter;
 import com.yoyodev.starter.AOP.Logging.CustomAuditingFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -24,5 +25,12 @@ public class ApplicationConfig {
         registration.setFilter(new CustomAuditingFilter());
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtFilter> disableJwtFilterAutoRegistration(JwtFilter jwtFilter) {
+        FilterRegistrationBean<JwtFilter> registrationBean = new FilterRegistrationBean<>(jwtFilter);
+        registrationBean.setEnabled(false);
+        return registrationBean;
     }
 }

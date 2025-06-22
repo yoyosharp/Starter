@@ -1,4 +1,11 @@
-CREATE USER baseappadmin WITH PASSWORD '123456';
+-- Create baseappadmin user if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'baseappadmin') THEN
+        CREATE USER baseappadmin WITH PASSWORD '123456';
+    END IF;
+END
+$$;
 
 -- Grant all privileges on all tables to baseappadmin
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO baseappadmin;

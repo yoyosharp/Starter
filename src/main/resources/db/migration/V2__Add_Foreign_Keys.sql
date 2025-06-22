@@ -42,3 +42,8 @@ ALTER TABLE "user_permission"
 ALTER TABLE "user_permission"
     ADD CONSTRAINT fk_user_permission_permission
         FOREIGN KEY (permission_id) REFERENCES mst_permission (id) ON DELETE CASCADE;
+
+-- Refresh Token foreign key
+ALTER TABLE refresh_token
+    ADD CONSTRAINT fk_refresh_token_user
+        FOREIGN KEY (user_id) REFERENCES mst_user (id) ON DELETE CASCADE;

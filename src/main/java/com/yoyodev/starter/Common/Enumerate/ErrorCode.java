@@ -16,6 +16,7 @@ public enum ErrorCode implements TransformableEnum<String> {
 
     AUTH_NOT_AUTHENTICATED("#010301"),
     AUTH_NOT_AUTHORIZED("#010302"),
+    AUTH_INVALID_TOKEN("#010303"),
 
     // Common
     DEFAULT("#000001"),
