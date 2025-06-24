@@ -15,7 +15,6 @@ import java.sql.Timestamp;
 public class RefreshToken extends AbstractAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Transient
     private Long id;
 
     @Column

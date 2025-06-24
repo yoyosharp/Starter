@@ -25,11 +25,11 @@ import java.util.Set;
 public class JwtProvider {
     private final PrivateKey privateKey;
     private final PublicKey publicKey;
-    @Value("${jwt.expiration-time-in-second}")
+    @Value("${jwt.expiration-time-in-seconds}")
     private Integer expirationTimeInSecond;
     @Value("${spring.application.name}")
     private String issuer;
-    @Value("${jwt.clock-skew-in-second}")
+    @Value("${jwt.clock-skew-in-seconds}")
     private Integer clockSkewInSecond;
 
     public String generateToken(String username) throws Exception {
@@ -45,7 +45,8 @@ public class JwtProvider {
         return jwsObject.serialize();
     }
 
-    public String parseSubject(String token) throws Exception {
+
+    public String proceedToken(String token) throws Exception {
         SignedJWT signedJWT = SignedJWT.parse(token);
         JWSVerifier rsaVerifier = new RSASSAVerifier((RSAPublicKey) publicKey);
         signedJWT.verify(rsaVerifier);
@@ -59,5 +60,19 @@ public class JwtProvider {
         claimsVerifier.verify(signedJWT.getJWTClaimsSet(), null);
 
         return signedJWT.getJWTClaimsSet().getSubject();
+    }
+
+    public String parseSubject(String token) throws Exception {
+        SignedJWT jwt = SignedJWT.parse(token);
+        JWSVerifier rsaVerifier = new RSASSAVerifier((RSAPublicKey) publicKey);
+        jwt.verify(rsaVerifier);
+        return jwt.getJWTClaimsSet().getSubject();
+    }
+
+    public long getExpirationTime(String token) throws Exception {
+        SignedJWT jwt = SignedJWT.parse(token);
+        JWSVerifier rsaVerifier = new RSASSAVerifier((RSAPublicKey) publicKey);
+        jwt.verify(rsaVerifier);
+        return jwt.getJWTClaimsSet().getExpirationTime().getTime();
     }
 }

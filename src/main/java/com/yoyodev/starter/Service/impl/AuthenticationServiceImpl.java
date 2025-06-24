@@ -20,7 +20,9 @@ import com.yoyodev.starter.Model.Response.AuthModel;
 import com.yoyodev.starter.Repositories.RefreshTokenRepository;
 import com.yoyodev.starter.Repositories.UserRepository;
 import com.yoyodev.starter.Service.AuthenticationService;
+import com.yoyodev.starter.Service.RedisCacheService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,16 +37,21 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisCacheService redisCacheService;
     private final String GENERATED_PERMISSION_NAME = "Generated";
-    @Value("${jwt.refresh-token.expiration-time-in-day}")
+    @Value("${jwt.refresh-token.expiration-time-in-days}")
     private Integer refreshTokenExpirationTimeInDay;
-    @Value("${jwt.expiration-time-in-second}")
+    @Value("${jwt.expiration-time-in-seconds}")
     private Integer jwtExpirationTimeInSecond;
+
+    private static final String BLACKLIST_KEY_PREFIX = "blacklisted_token:";
+    private static final long DEFAULT_BLACKLIST_TTL_OFFSET = 300; // 5 minutes in seconds
 
     @Override
     @Transactional(readOnly = true)
@@ -174,5 +181,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (status == UserStatus.Locked) throw new BaseAuthenticationException(ErrorCode.AUTH_USER_LOCKED.getValue());
         if (status == UserStatus.Deactivated)
             throw new BaseAuthenticationException(ErrorCode.AUTH_USER_DEACTIVATED.getValue());
+    }
+
+    @Override
+    public void blacklistToken(String token) {
+        try {
+            long expirationTime = jwtProvider.getExpirationTime(token);
+            long currentTime = System.currentTimeMillis();
+            long ttl = (expirationTime - currentTime) / 1000 + DEFAULT_BLACKLIST_TTL_OFFSET; // Add some buffer time
+            
+            if (ttl > 0) {
+                String key = BLACKLIST_KEY_PREFIX + token;
+                redisCacheService.saveOne(key, "blacklisted", (int) ttl);
+            }
+        } catch (Exception e) {
+            log.error("Error blacklisting token: {}", e.getMessage());
+            throw new BaseException(ErrorCode.AUTH_JWT_PROCESSING_ERROR, "Failed to blacklist token");
+        }
     }
 }

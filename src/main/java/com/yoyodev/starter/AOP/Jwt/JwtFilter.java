@@ -37,7 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
         System.out.println("Processing request " + request.getRequestURI());
         String token = getJwtFromRequest(request);
         try {
-            String username = jwtProvider.parseSubject(token);
+            String username = jwtProvider.proceedToken(token);
             UserPrincipal userPrincipal = authenticationService.getUserPrincipalByUsername(username);
 
             Set<GrantedPermission> authorities = userPrincipal.permissions().stream().map(GrantedPermission::new).collect(Collectors.toSet());

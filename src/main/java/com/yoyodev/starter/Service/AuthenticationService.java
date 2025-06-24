@@ -11,4 +11,6 @@ public interface AuthenticationService {
     AuthModel login(AuthUserRequest request);
 
     String getAccessTokenByRefreshToken(AuthModel authModel);
+
+    void blacklistToken(String token);
 }
