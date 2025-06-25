@@ -63,4 +63,8 @@ public class BaseRedisCacheService implements RedisCacheService {
             log.error("Error deleting from Redis cache: {}", e.getMessage(), e);
         }
     }
+
+    public boolean existsByKey(String key) {
+        return redisTemplate.hasKey(key);
+    }
 }

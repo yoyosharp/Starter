@@ -10,4 +10,6 @@ public interface RedisCacheService {
     <T> List<T> getList(String key, Class<T> clazz);
 
     void deleteOne(String key);
+
+    boolean existsByKey(String key);
 }

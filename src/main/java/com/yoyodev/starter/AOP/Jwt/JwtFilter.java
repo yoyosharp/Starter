@@ -2,10 +2,12 @@ package com.yoyodev.starter.AOP.Jwt;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.proc.BadJWTException;
+import com.yoyodev.starter.Common.Enumerate.ErrorCode;
 import com.yoyodev.starter.Exception.BaseAuthenticationException;
 import com.yoyodev.starter.Exception.JwtVerificationException;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;
 import com.yoyodev.starter.Service.AuthenticationService;
+import com.yoyodev.starter.Service.RedisCacheService;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,12 +24,16 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.yoyodev.starter.Common.Constants.RedisConstants.BLACKLIST_TOKEN_KEY_PREFIX;
+import static com.yoyodev.starter.Common.Constants.RedisConstants.REDIS_KEY_SEPARATOR;
+
 @Component
 @AllArgsConstructor
 @Slf4j
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final AuthenticationService authenticationService;
+    private final RedisCacheService redisCacheService;
 
     @Override
     protected void doFilterInternal(@Nonnull HttpServletRequest request,
@@ -37,6 +43,11 @@ public class JwtFilter extends OncePerRequestFilter {
         System.out.println("Processing request " + request.getRequestURI());
         String token = getJwtFromRequest(request);
         try {
+            String key = BLACKLIST_TOKEN_KEY_PREFIX + REDIS_KEY_SEPARATOR + token;
+            if (redisCacheService.existsByKey(key)) {
+                throw new BaseAuthenticationException(ErrorCode.AUTH_TOKEN_BLACKLISTED, "Token is blacklisted");
+            }
+
             String username = jwtProvider.proceedToken(token);
             UserPrincipal userPrincipal = authenticationService.getUserPrincipalByUsername(username);
 

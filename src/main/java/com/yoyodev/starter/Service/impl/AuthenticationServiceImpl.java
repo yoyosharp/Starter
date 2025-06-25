@@ -1,7 +1,6 @@
 package com.yoyodev.starter.Service.impl;
 
 import com.yoyodev.starter.AOP.Jwt.JwtProvider;
-import com.yoyodev.starter.Common.Constants.Constants;
 import com.yoyodev.starter.Common.Enumerate.Converter.EnumConverter;
 import com.yoyodev.starter.Common.Enumerate.EnabledStatus;
 import com.yoyodev.starter.Common.Enumerate.ErrorCode;
@@ -35,6 +34,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.yoyodev.starter.Common.Constants.Constants.EMPTY_STRING;
+import static com.yoyodev.starter.Common.Constants.RedisConstants.BLACKLIST_TOKEN_KEY_PREFIX;
+import static com.yoyodev.starter.Common.Constants.RedisConstants.REDIS_KEY_SEPARATOR;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -50,7 +53,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Value("${jwt.expiration-time-in-seconds}")
     private Integer jwtExpirationTimeInSecond;
 
-    private static final String BLACKLIST_KEY_PREFIX = "blacklisted_token:";
     private static final long DEFAULT_BLACKLIST_TTL_OFFSET = 300; // 5 minutes in seconds
 
     @Override
@@ -122,6 +124,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional(readOnly = true)
     public String getAccessTokenByRefreshToken(AuthModel authModel) {
+        String key = BLACKLIST_TOKEN_KEY_PREFIX + REDIS_KEY_SEPARATOR + authModel.accessToken();
+        if (redisCacheService.existsByKey(key)) {
+            throw new BaseAuthenticationException(ErrorCode.AUTH_TOKEN_BLACKLISTED, "Token is blacklisted");
+        }
+
         try {
             String username = jwtProvider.parseSubject(authModel.accessToken());
 
@@ -150,7 +157,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private String getRefreshToken(Boolean rememberMe, Long userId) {
         if (rememberMe == null || !rememberMe) {
-            return Constants.EMPTY_STRING;
+            return EMPTY_STRING;
         }
 
         RefreshToken refreshToken = refreshTokenRepository.findAccessTokenByUserId(userId).orElse(null);
@@ -191,8 +198,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             long ttl = (expirationTime - currentTime) / 1000 + DEFAULT_BLACKLIST_TTL_OFFSET; // Add some buffer time
             
             if (ttl > 0) {
-                String key = BLACKLIST_KEY_PREFIX + token;
-                redisCacheService.saveOne(key, "blacklisted", (int) ttl);
+                String key = BLACKLIST_TOKEN_KEY_PREFIX + REDIS_KEY_SEPARATOR + token;
+                redisCacheService.saveOne(key, EMPTY_STRING, (int) ttl);
             }
         } catch (Exception e) {
             log.error("Error blacklisting token: {}", e.getMessage());
