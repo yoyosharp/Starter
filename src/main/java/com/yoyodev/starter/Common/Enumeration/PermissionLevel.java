@@ -1,4 +1,4 @@
-package com.yoyodev.starter.Common.Enumerate;
+package com.yoyodev.starter.Common.Enumeration;
 
 public enum PermissionLevel implements TransformableEnum<Integer> {
     None(0),

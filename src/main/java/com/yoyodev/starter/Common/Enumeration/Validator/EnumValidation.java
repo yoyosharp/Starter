@@ -1,6 +1,6 @@
-package com.yoyodev.starter.Common.Enumerate.Validator;
+package com.yoyodev.starter.Common.Enumeration.Validator;
 
-import com.yoyodev.starter.Common.Enumerate.TransformableEnum;
+import com.yoyodev.starter.Common.Enumeration.TransformableEnum;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
@@ -14,7 +14,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnumValidation {
     String message() default "";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
+
     Class<? extends TransformableEnum<?>> targetClass();
 }

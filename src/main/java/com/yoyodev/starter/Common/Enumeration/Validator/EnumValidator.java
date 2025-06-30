@@ -1,6 +1,6 @@
-package com.yoyodev.starter.Common.Enumerate.Validator;
+package com.yoyodev.starter.Common.Enumeration.Validator;
 
-import com.yoyodev.starter.Common.Enumerate.TransformableEnum;
+import com.yoyodev.starter.Common.Enumeration.TransformableEnum;
 import com.yoyodev.starter.Exception.BaseException;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

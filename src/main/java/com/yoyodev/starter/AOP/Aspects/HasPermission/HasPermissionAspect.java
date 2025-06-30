@@ -1,12 +1,15 @@
-package com.yoyodev.starter.AOP.Aspects;
+package com.yoyodev.starter.AOP.Aspects.HasPermission;
 
 import com.yoyodev.starter.AOP.Jwt.GrantedPermission;
-import com.yoyodev.starter.Common.Enumerate.ErrorCode;
+import com.yoyodev.starter.Common.Enumeration.ErrorCode;
 import com.yoyodev.starter.Exception.BaseAuthenticationException;
+import com.yoyodev.starter.Model.DTO.UserPrincipal;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -16,8 +19,14 @@ import java.util.stream.Collectors;
 
 @Aspect
 @Component
+@Order(1)
 @Slf4j
 public class HasPermissionAspect {
+
+    @PostConstruct
+    public void init() {
+        log.info("HasPermissionAspect initialized");
+    }
 
     @Around("@annotation(hasPermission)")
     public Object validatePermission(ProceedingJoinPoint joinPoint, HasPermission hasPermission) throws Throwable {
@@ -38,10 +47,11 @@ public class HasPermissionAspect {
                                 (authority.hasPrivilege(hasPermission.level()) || !authority.isEnabled()));
 
         if (!accepted) {
-            log.error("No permission, username: {}, module: {}, functionName: {}",
-                    SecurityContextHolder.getContext().getAuthentication().getName(),
+            log.warn("No permission, username: {}, required permission: [module: {}, functionName: {}, level: {}]",
+                    ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).username(),
                     hasPermission.module(),
-                    hasPermission.functionName());
+                    hasPermission.functionName(),
+                    hasPermission.level());
             throw new BaseAuthenticationException(ErrorCode.AUTH_NOT_AUTHORIZED, "No permission");
         }
 

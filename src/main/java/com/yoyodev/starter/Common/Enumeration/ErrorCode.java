@@ -1,4 +1,4 @@
-package com.yoyodev.starter.Common.Enumerate;
+package com.yoyodev.starter.Common.Enumeration;
 
 public enum ErrorCode implements TransformableEnum<String> {
     /* The error code should be unique and follow this format:

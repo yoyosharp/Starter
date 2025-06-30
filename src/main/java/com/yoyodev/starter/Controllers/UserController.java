@@ -1,7 +1,7 @@
 package com.yoyodev.starter.Controllers;
 
 import com.yoyodev.starter.Common.Constants.EndpointConstants;
-import com.yoyodev.starter.Common.Enumerate.ErrorCode;
+import com.yoyodev.starter.Common.Enumeration.ErrorCode;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;
 import com.yoyodev.starter.Model.Response.ResponseWrapper;
 import com.yoyodev.starter.Model.Response.UserResponse;

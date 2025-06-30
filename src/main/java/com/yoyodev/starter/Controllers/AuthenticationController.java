@@ -1,7 +1,7 @@
 package com.yoyodev.starter.Controllers;
 
 import com.yoyodev.starter.Common.Constants.EndpointConstants;
-import com.yoyodev.starter.Common.Enumerate.ErrorCode;
+import com.yoyodev.starter.Common.Enumeration.ErrorCode;
 import com.yoyodev.starter.Exception.BaseAuthenticationException;
 import com.yoyodev.starter.Model.Request.AuthUserRequest;
 import com.yoyodev.starter.Model.Response.AuthModel;
@@ -60,6 +60,11 @@ public class AuthenticationController extends BaseController {
         if (model == null || model.refreshToken() == null || model.accessToken() == null) {
             return getFailed(ErrorCode.VALIDATION_INVALID_PARAMETERS, "Invalid access token or refresh token");
         }
-        return getSuccess(authenticationService.getAccessTokenByRefreshToken(model));
+        try {
+            return getSuccess(authenticationService.getAccessTokenByRefreshToken(model));
+        } catch (BaseAuthenticationException authenticationException) {
+            return getFailed(authenticationException.getErrorCode(), authenticationException.getMessage());
+        }
+
     }
 }

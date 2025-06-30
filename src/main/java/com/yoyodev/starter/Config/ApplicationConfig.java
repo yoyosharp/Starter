@@ -1,5 +1,7 @@
 package com.yoyodev.starter.Config;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.yoyodev.starter.AOP.Jwt.JwtFilter;
 import com.yoyodev.starter.AOP.Logging.CustomAuditingFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -15,7 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
-@EnableAspectJAutoProxy
+@EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
 public class ApplicationConfig {
 
     @Bean
@@ -37,6 +39,7 @@ public class ApplicationConfig {
         registrationBean.setEnabled(false);
         return registrationBean;
     }
+
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         return new LettuceConnectionFactory(new RedisStandaloneConfiguration("localhost", 6379));
@@ -47,5 +50,19 @@ public class ApplicationConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
         return template;
+    }
+
+    @Bean(name = "normal-serializer")
+    public Gson normalSerializer() {
+        return new GsonBuilder()
+                .setPrettyPrinting()
+                .serializeNulls()
+                .disableHtmlEscaping()
+                .create();
+    }
+
+    @Bean(name = "redis-serializer")
+    public Gson redisSerializer() {
+        return new Gson();
     }
 }

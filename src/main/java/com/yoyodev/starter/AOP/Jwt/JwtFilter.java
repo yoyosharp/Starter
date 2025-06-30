@@ -2,12 +2,12 @@ package com.yoyodev.starter.AOP.Jwt;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.proc.BadJWTException;
-import com.yoyodev.starter.Common.Enumerate.ErrorCode;
+import com.yoyodev.starter.AOP.Cache.RedisCacheService;
+import com.yoyodev.starter.Common.Enumeration.ErrorCode;
 import com.yoyodev.starter.Exception.BaseAuthenticationException;
 import com.yoyodev.starter.Exception.JwtVerificationException;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;
 import com.yoyodev.starter.Service.AuthenticationService;
-import com.yoyodev.starter.Service.RedisCacheService;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -58,12 +58,19 @@ public class JwtFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
-        } catch (JOSEException | BadJWTException | BaseAuthenticationException jwtException) {
+        } catch (JOSEException | BadJWTException | JwtVerificationException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write(jwtException.getMessage());
+            response.getWriter().write(e.getMessage());
+            response.getWriter().flush();
+        } catch (BaseAuthenticationException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.getWriter().write(e.getMessage());
             response.getWriter().flush();
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Internal server error");
+            response.getWriter().flush();
+            log.error("Internal server error", e);
         }
     }
 

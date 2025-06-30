@@ -28,7 +28,7 @@ public class SecurityConfig {
     private final List<String> allowedMethods = Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE");
     private final String[] publicEndpoints = {
             EndpointConstants.API_V1_AUTH + "/**",
-            EndpointConstants.API_V1 + "/demo/**",
+            EndpointConstants.API_V1 + "/demo/no-authentication",
             "/error"
     };
     private final JwtFilter jwtFilter;

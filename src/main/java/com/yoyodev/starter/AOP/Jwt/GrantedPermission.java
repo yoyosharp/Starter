@@ -1,7 +1,7 @@
 package com.yoyodev.starter.AOP.Jwt;
 
-import com.yoyodev.starter.Common.Enumerate.EnabledStatus;
-import com.yoyodev.starter.Common.Enumerate.PermissionLevel;
+import com.yoyodev.starter.Common.Enumeration.EnabledStatus;
+import com.yoyodev.starter.Common.Enumeration.PermissionLevel;
 import com.yoyodev.starter.Model.DTO.SimplePermission;
 import org.springframework.security.core.GrantedAuthority;
 

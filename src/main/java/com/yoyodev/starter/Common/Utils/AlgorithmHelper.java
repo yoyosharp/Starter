@@ -3,7 +3,10 @@ package com.yoyodev.starter.Common.Utils;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class AlgorithmHelper {
+public final class AlgorithmHelper {
+
+    private AlgorithmHelper() {
+    }
 
     public static String generateMD5(String input) {
         try {
@@ -21,7 +24,7 @@ public class AlgorithmHelper {
         }
     }
 
-    public static boolean validateMD5(String hashedText,  String rawText) throws Exception {
+    public static boolean validateMD5(String hashedText, String rawText) throws Exception {
         String md5 = generateMD5(rawText);
         return md5.equals(hashedText);
     }

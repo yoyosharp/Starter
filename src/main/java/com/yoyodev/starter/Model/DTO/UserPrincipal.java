@@ -1,7 +1,6 @@
 package com.yoyodev.starter.Model.DTO;
 
-import com.yoyodev.starter.Common.Enumerate.UserStatus;
-
+import com.yoyodev.starter.Common.Enumeration.UserStatus;
 
 import java.util.Set;
 

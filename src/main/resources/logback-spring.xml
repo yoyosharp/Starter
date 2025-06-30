@@ -1,30 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <conversionRule conversionWord="clr" class="org.springframework.boot.logging.logback.ColorConverter"/>
-    <conversionRule conversionWord="wEx" class="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="wEx"
+                    class="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
     <!-- Define the pattern for log messages -->
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} %clr(%-5level) %clr(${PID:-}){magenta} %-40.40logger{39} - %msg %n%wEx"/>
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss} %clr(%-5level) %clr(${PID:-}){magenta} %-40.40logger{39} - %msg %n%wEx"/>
     <property name="LOG_CHARSET" value="UTF-8"/>
 
     <!-- Console appender for logging to the console -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
+            <charset>${LOG_CHARSET}</charset>
         </encoder>
     </appender>
 
-    <!-- File appender for console log -->
+    <!-- File appender for general console log -->
     <appender name="CONSOLE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/console.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>logs/console.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
-        <encoder class="org.springframework.boot.logging.logback.StructuredLogEncoder">
-            <format>logstash</format>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
             <charset>${LOG_CHARSET}</charset>
         </encoder>
     </appender>
+
+    <!-- =============================================================== -->
+    <!-- == NEW: File appender specifically for Performance Audit logs  == -->
+    <!-- =============================================================== -->
+    <appender name="PERFORMANCE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/performance.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>logs/performance.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- keep 30 days' worth of history -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <!-- Using a non-colored pattern for file logging -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level ${PID:-} %-40.40logger{39} - %msg %n%wEx</pattern>
+            <charset>${LOG_CHARSET}</charset>
+        </encoder>
+    </appender>
+
+    <!-- =============================================================== -->
+    <!-- == NEW: Logger configuration for the PerformanceLogAspect    == -->
+    <!-- =============================================================== -->
+    <logger name="com.yoyodev.starter.AOP.Aspects.PerformanceLog.PerformanceLogAspect" level="debug" additivity="false">
+        <appender-ref ref="PERFORMANCE_FILE"/>
+    </logger>
+
 
     <!-- Root logger configuration -->
     <root level="info">

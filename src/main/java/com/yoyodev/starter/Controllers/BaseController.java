@@ -1,6 +1,6 @@
 package com.yoyodev.starter.Controllers;
 
-import com.yoyodev.starter.Common.Enumerate.ErrorCode;
+import com.yoyodev.starter.Common.Enumeration.ErrorCode;
 import com.yoyodev.starter.Exception.BaseAuthenticationException;
 import com.yoyodev.starter.Exception.BaseException;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;

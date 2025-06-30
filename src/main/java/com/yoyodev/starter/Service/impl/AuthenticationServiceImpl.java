@@ -1,11 +1,12 @@
 package com.yoyodev.starter.Service.impl;
 
+import com.yoyodev.starter.AOP.Cache.RedisCacheService;
 import com.yoyodev.starter.AOP.Jwt.JwtProvider;
-import com.yoyodev.starter.Common.Enumerate.Converter.EnumConverter;
-import com.yoyodev.starter.Common.Enumerate.EnabledStatus;
-import com.yoyodev.starter.Common.Enumerate.ErrorCode;
-import com.yoyodev.starter.Common.Enumerate.PermissionLevel;
-import com.yoyodev.starter.Common.Enumerate.UserStatus;
+import com.yoyodev.starter.Common.Enumeration.Converter.EnumConverter;
+import com.yoyodev.starter.Common.Enumeration.EnabledStatus;
+import com.yoyodev.starter.Common.Enumeration.ErrorCode;
+import com.yoyodev.starter.Common.Enumeration.PermissionLevel;
+import com.yoyodev.starter.Common.Enumeration.UserStatus;
 import com.yoyodev.starter.Common.Utils.AlgorithmHelper;
 import com.yoyodev.starter.Entities.Projection.UserAuthProjection;
 import com.yoyodev.starter.Entities.Projection.UserProjection;
@@ -19,7 +20,6 @@ import com.yoyodev.starter.Model.Response.AuthModel;
 import com.yoyodev.starter.Repositories.RefreshTokenRepository;
 import com.yoyodev.starter.Repositories.UserRepository;
 import com.yoyodev.starter.Service.AuthenticationService;
-import com.yoyodev.starter.Service.RedisCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +42,7 @@ import static com.yoyodev.starter.Common.Constants.RedisConstants.REDIS_KEY_SEPA
 @RequiredArgsConstructor
 @Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
+    private static final long DEFAULT_BLACKLIST_TTL_OFFSET = 300; // 5 minutes in seconds
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
@@ -52,8 +53,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private Integer refreshTokenExpirationTimeInDay;
     @Value("${jwt.expiration-time-in-seconds}")
     private Integer jwtExpirationTimeInSecond;
-
-    private static final long DEFAULT_BLACKLIST_TTL_OFFSET = 300; // 5 minutes in seconds
 
     @Override
     @Transactional(readOnly = true)
@@ -193,10 +192,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public void blacklistToken(String token) {
         try {
-            long expirationTime = jwtProvider.getExpirationTime(token);
+            long expirationTime = jwtProvider.getExpirationTimeFromToken(token);
             long currentTime = System.currentTimeMillis();
             long ttl = (expirationTime - currentTime) / 1000 + DEFAULT_BLACKLIST_TTL_OFFSET; // Add some buffer time
-            
+
             if (ttl > 0) {
                 String key = BLACKLIST_TOKEN_KEY_PREFIX + REDIS_KEY_SEPARATOR + token;
                 redisCacheService.saveOne(key, EMPTY_STRING, (int) ttl);

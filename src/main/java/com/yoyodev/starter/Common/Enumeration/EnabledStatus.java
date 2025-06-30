@@ -1,4 +1,4 @@
-package com.yoyodev.starter.Common.Enumerate;
+package com.yoyodev.starter.Common.Enumeration;
 
 public enum EnabledStatus implements TransformableEnum<Integer> {
     Enabled(1),

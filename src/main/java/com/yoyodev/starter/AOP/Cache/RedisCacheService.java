@@ -1,36 +1,39 @@
-package com.yoyodev.starter.Service.impl;
+package com.yoyodev.starter.AOP.Cache;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.yoyodev.starter.Service.RedisCacheService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
-public class BaseRedisCacheService implements RedisCacheService {
-    private final RedisTemplate<String, Object> redisTemplate;
-    private final Gson gson = new Gson();
+public class RedisCacheService {
+    private final RedisTemplate<String, String> redisTemplate;
+    private final Gson gson;
 
-    @Override
-    public void saveOne(String key, String value, int expireInSeconds) {
+    public RedisCacheService(RedisTemplate<String, String> redisTemplate, @Qualifier(value = "redis-serializer") Gson gson) {
+        this.redisTemplate = redisTemplate;
+        this.gson = gson;
+    }
+
+    public void saveOne(String key, Object value, int expireInSeconds) {
         try {
-            redisTemplate.opsForValue().set(key, value, expireInSeconds, TimeUnit.SECONDS);
+            String json = gson.toJson(value);
+            redisTemplate.opsForValue().set(key, json, expireInSeconds, TimeUnit.SECONDS);
         } catch (Exception e) {
             log.error("Failed to save to Redis, key: {}", key, e);
         }
     }
 
-    @Override
     public <T> T getOne(String key, Class<T> clazz) {
         try {
-            String value = (String) redisTemplate.opsForValue().get(key);
+            String value = redisTemplate.opsForValue().get(key);
             if (value == null) {
                 return null;
             }
@@ -41,12 +44,11 @@ public class BaseRedisCacheService implements RedisCacheService {
         }
     }
 
-    @Override
     public <T> List<T> getList(String key, Class<T> clazz) {
         try {
-            String value = (String) redisTemplate.opsForValue().get(key);
+            String value = redisTemplate.opsForValue().get(key);
             if (value == null) {
-                return null;
+                return new ArrayList<>();
             }
             return gson.fromJson(value, new TypeToken<List<T>>() {}.getType());
         } catch (Exception e) {
@@ -55,7 +57,6 @@ public class BaseRedisCacheService implements RedisCacheService {
         }
     }
 
-    @Override
     public void deleteOne(String key) {
         try {
             redisTemplate.delete(key);

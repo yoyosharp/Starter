@@ -69,7 +69,7 @@ public class JwtProvider {
         return jwt.getJWTClaimsSet().getSubject();
     }
 
-    public long getExpirationTime(String token) throws Exception {
+    public long getExpirationTimeFromToken(String token) throws Exception {
         SignedJWT jwt = SignedJWT.parse(token);
         JWSVerifier rsaVerifier = new RSASSAVerifier((RSAPublicKey) publicKey);
         jwt.verify(rsaVerifier);

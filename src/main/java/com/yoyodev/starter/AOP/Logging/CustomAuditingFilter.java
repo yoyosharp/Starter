@@ -1,13 +1,13 @@
 package com.yoyodev.starter.AOP.Logging;
 
+import com.yoyodev.starter.Common.Constants.RequestContextAttributes;
+import com.yoyodev.starter.Common.Utils.RequestContextHelper;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
@@ -17,8 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.UUID;
 
-import static com.yoyodev.starter.Common.Constants.RequestContextAttributes.*;
-
 @Slf4j
 public class CustomAuditingFilter extends OncePerRequestFilter {
 
@@ -27,20 +25,25 @@ public class CustomAuditingFilter extends OncePerRequestFilter {
                                     @Nonnull HttpServletResponse response,
                                     @Nonnull FilterChain filterChain) throws ServletException, IOException {
 
-        if (RequestContextHolder.getRequestAttributes() == null) {
-            RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        // Initialize request context if not already set
+        if (!RequestContextHelper.hasRequest()) {
+            RequestContextHelper.initialize(request);
         }
+
         ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
 
+        // Set request attributes using RequestContextHelper
         String requestId = UUID.randomUUID().toString();
-        RequestContextHolder.getRequestAttributes().setAttribute(REQUEST_ID_ATTRIBUTE, requestId, ServletRequestAttributes.SCOPE_REQUEST);
         String method = request.getMethod();
         String queryString = request.getQueryString();
         String fullUrl = request.getRequestURI() + (queryString != null ? "?" + URLDecoder.decode(queryString, StandardCharsets.UTF_8) : "");
-        RequestContextHolder.getRequestAttributes().setAttribute(FULL_URL_ATTRIBUTE, fullUrl, ServletRequestAttributes.SCOPE_REQUEST);
         String remoteAddr = getClientIpAddress(request);
-        RequestContextHolder.getRequestAttributes().setAttribute(REMOTE_ADDR_ATTRIBUTE, remoteAddr, ServletRequestAttributes.SCOPE_REQUEST);
         String userAgent = request.getHeader("User-Agent");
+
+        // Set attributes in request context
+        RequestContextHelper.setRequestAttribute(RequestContextAttributes.REQUEST_ID_ATTRIBUTE, requestId);
+        RequestContextHelper.setRequestAttribute(RequestContextAttributes.FULL_URL_ATTRIBUTE, fullUrl);
+        RequestContextHelper.setRequestAttribute(RequestContextAttributes.REMOTE_ADDR_ATTRIBUTE, remoteAddr);
 
         log.info("""
                         \nIncoming request: [{}]
@@ -49,25 +52,29 @@ public class CustomAuditingFilter extends OncePerRequestFilter {
                           Remote address: {}
                               User-Agent: {}""",
                 requestId, method, fullUrl, remoteAddr, userAgent);
-        try {
-            filterChain.doFilter(request, response);
-        } finally {
-            if (wrappedResponse.getStatus() < 200 || wrappedResponse.getStatus() > 299) {
-                log.warn("Request [{}] incompleted with status: {}",
-                        requestId,
-                        wrappedResponse.getStatus());
-            } else {
-                log.info("Request [{}] completed with status: {}",
-                        requestId,
-                        wrappedResponse.getStatus());
-            }
 
+        try {
+            filterChain.doFilter(request, wrappedResponse);
+        } finally {
+            int status = wrappedResponse.getStatus();
+            String logMessage = "Request [{}] {} with status: {}";
+            if (status < 200 || status > 299) {
+                log.warn(logMessage, requestId, "failed", status);
+            } else {
+                log.info(logMessage, requestId, "completed", status);
+            }
             wrappedResponse.copyBodyToResponse();
         }
     }
 
     private String getClientIpAddress(HttpServletRequest request) {
-        String[] matchingHeaders = {"X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP", "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR"};
+        String[] matchingHeaders = {
+                "X-Forwarded-For",
+                "Proxy-Client-IP",
+                "WL-Proxy-Client-IP",
+                "HTTP_CLIENT_IP",
+                "HTTP_X_FORWARDED_FOR"
+        };
 
         String ip = Arrays.stream(matchingHeaders)
                 .map(request::getHeader)

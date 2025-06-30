@@ -1,6 +1,6 @@
-package com.yoyodev.starter.Common.Enumerate.Converter;
+package com.yoyodev.starter.Common.Enumeration.Converter;
 
-import com.yoyodev.starter.Common.Enumerate.TransformableEnum;
+import com.yoyodev.starter.Common.Enumeration.TransformableEnum;
 
 import java.util.Arrays;
 

@@ -1,7 +1,7 @@
 package com.yoyodev.starter.Model.DTO;
 
-import com.yoyodev.starter.Common.Enumerate.EnabledStatus;
-import com.yoyodev.starter.Common.Enumerate.PermissionLevel;
+import com.yoyodev.starter.Common.Enumeration.EnabledStatus;
+import com.yoyodev.starter.Common.Enumeration.PermissionLevel;
 
 public record SimplePermission(String name,
                                String moduleId,

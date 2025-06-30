@@ -1,6 +1,6 @@
 package com.yoyodev.starter.Model.Response;
 
-import com.yoyodev.starter.Common.Enumerate.UserStatus;
+import com.yoyodev.starter.Common.Enumeration.UserStatus;
 import com.yoyodev.starter.Model.DTO.SimplePermission;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;
 import lombok.Getter;
