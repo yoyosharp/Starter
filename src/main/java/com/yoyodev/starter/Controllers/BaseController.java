@@ -5,19 +5,40 @@ import com.yoyodev.starter.Exception.BaseAuthenticationException;
 import com.yoyodev.starter.Exception.BaseException;
 import com.yoyodev.starter.Model.DTO.UserPrincipal;
 import com.yoyodev.starter.Model.Response.ResponseWrapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import static com.yoyodev.starter.Common.Constants.Constants.*;
+import java.util.Locale;
+
+import static com.yoyodev.starter.Common.Constants.Constants.EMPTY_STRING;
 
 public class BaseController {
+
+    @Autowired
+    protected MessageSource messageSource;
+
+    protected String getMessage(String code) {
+        return messageSource.getMessage(code, null, getCurrentLocale());
+    }
+
+    protected String getMessage(String code, Object... args) {
+        return messageSource.getMessage(code, args, getCurrentLocale());
+    }
+
+    protected Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
     public <T> ResponseEntity<ResponseWrapper<T>> getSuccess(T obj) {
-        ResponseWrapper<T> response = new ResponseWrapper<>(false, ErrorCode.SUCCESS, SUCCESS, obj);
+        ResponseWrapper<T> response = new ResponseWrapper<>(false, ErrorCode.SUCCESS, getMessage("common.success"), obj);
         return ResponseEntity.ok(response);
     }
 
     public ResponseEntity<ResponseWrapper<String>> getSuccess() {
-        ResponseWrapper<String> response = new ResponseWrapper<>(false, ErrorCode.SUCCESS, SUCCESS, EMPTY_STRING);
+        ResponseWrapper<String> response = new ResponseWrapper<>(false, ErrorCode.SUCCESS, getMessage("common.success"), EMPTY_STRING);
         return ResponseEntity.ok(response);
     }
 
@@ -34,8 +55,8 @@ public class BaseController {
     }
 
     // failed with a multiple causes
-    public ResponseEntity<ResponseWrapper<Object>> getFailed(ErrorCode errorCode, String... causes) {
-        ResponseWrapper<Object> response = new ResponseWrapper<>(true, errorCode, FAILED, causes);
+    public ResponseEntity<ResponseWrapper<?>> getFailed(ErrorCode errorCode, String... causes) {
+        ResponseWrapper<?> response = new ResponseWrapper<>(true, errorCode, getMessage("common.failed"), causes);
         return ResponseEntity.ok(response);
     }
 
@@ -47,7 +68,7 @@ public class BaseController {
     public UserPrincipal getAuthentication() {
         UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (userPrincipal == null) {
-            throw new BaseAuthenticationException("Cannot get current user principal");
+            throw new BaseAuthenticationException(getMessage("auth.user.not.found"));
         }
         return userPrincipal;
     }

@@ -6,6 +6,7 @@ RETURNS TABLE(
     verified_at timestamp without time zone,
     module_id varchar,
     function_id varchar,
+    permission_name varchar,
     permission_level int2,
     enabled_flag int2
 )
@@ -83,22 +84,27 @@ RETURN QUERY
             up_module_id AS ap_module_id,
             up_function_id AS ap_function_id,
             up_permission_level AS ap_permission_level,
-            up_enabled_flag AS ap_enabled_flag
-        FROM user_perms
+            up_enabled_flag AS ap_enabled_flag,
+            p.permission_name AS ap_permission_name
+        FROM user_perms up
+        JOIN mst_permission p ON p.module_id = up.up_module_id AND p.function_id = up.up_function_id
         UNION ALL
         SELECT
             ar_module_id,
             ar_function_id,
             ar_permission_level,
-            ar_enabled_flag
-        FROM resolved_role_group_perms
+            ar_enabled_flag,
+            p.permission_name AS ap_permission_name
+        FROM resolved_role_group_perms r
+        JOIN mst_permission p ON p.module_id = r.ar_module_id AND p.function_id = r.ar_function_id
     ),
     effective_permissions AS (
         SELECT DISTINCT ON (ap_module_id, ap_function_id)
             ap_module_id,
             ap_function_id,
             ap_permission_level,
-            ap_enabled_flag
+            ap_enabled_flag,
+            ap_permission_name
         FROM all_permissions
         ORDER BY ap_module_id, ap_function_id,
             CASE
@@ -118,6 +124,7 @@ RETURN QUERY
         ub.verified_at,
         ep.ap_module_id AS module_id,
         ep.ap_function_id AS function_id,
+        ep.ap_permission_name AS permission_name,
         ep.ap_permission_level AS permission_level,
         ep.ap_enabled_flag AS enabled_flag
     FROM user_base ub

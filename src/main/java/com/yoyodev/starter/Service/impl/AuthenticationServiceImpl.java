@@ -1,12 +1,12 @@
 package com.yoyodev.starter.Service.impl;
 
+import com.yoyodev.starter.AOP.Aspects.PerformanceLog.PerformanceLog;
 import com.yoyodev.starter.AOP.Cache.RedisCacheService;
 import com.yoyodev.starter.AOP.Jwt.JwtProvider;
+import com.yoyodev.starter.Common.Constants.Constants;
+import com.yoyodev.starter.Common.Constants.RedisConstants;
 import com.yoyodev.starter.Common.Enumeration.Converter.EnumConverter;
-import com.yoyodev.starter.Common.Enumeration.EnabledStatus;
-import com.yoyodev.starter.Common.Enumeration.ErrorCode;
-import com.yoyodev.starter.Common.Enumeration.PermissionLevel;
-import com.yoyodev.starter.Common.Enumeration.UserStatus;
+import com.yoyodev.starter.Common.Enumeration.*;
 import com.yoyodev.starter.Common.Utils.AlgorithmHelper;
 import com.yoyodev.starter.Entities.Projection.UserAuthProjection;
 import com.yoyodev.starter.Entities.Projection.UserProjection;
@@ -34,10 +34,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.yoyodev.starter.Common.Constants.Constants.EMPTY_STRING;
-import static com.yoyodev.starter.Common.Constants.RedisConstants.BLACKLIST_TOKEN_KEY_PREFIX;
-import static com.yoyodev.starter.Common.Constants.RedisConstants.REDIS_KEY_SEPARATOR;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -56,6 +52,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional(readOnly = true)
+    @PerformanceLog(logType = {PerformanceLogType.TIME})
     public UserPrincipal getUserPrincipalByUsername(String username) {
         /*
         User user = userRepository.findUserByIdentity(username)
@@ -85,14 +82,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND.getValue());
 
         UserAuthProjection user = userAuthWithPermissions.getFirst();
-        validateUserActiveStatus(user.getVerifiedAt(), user.getStatus());
+        validateUserActiveStatus(user.getVerifiedAt(), user.getUserStatus());
 
         Set<SimplePermission> permissions = userAuthWithPermissions.stream()
                 .filter(row -> row.getUserId().equals(user.getUserId()))
-                .map(row -> new SimplePermission(GENERATED_PERMISSION_NAME,
+                .map(row -> new SimplePermission((row.getPermissionName() == null || row.getPermissionName().isEmpty()) ? GENERATED_PERMISSION_NAME : row.getPermissionName(),
                         row.getModuleId(),
                         row.getFunctionId(),
-                        EnumConverter.convert(row.getLevel(), PermissionLevel.class),
+                        EnumConverter.convert(row.getPermissionLevel(), PermissionLevel.class),
                         EnumConverter.convert(row.getEnabledFlag(), EnabledStatus.class)))
                 .collect(Collectors.toSet());
 
@@ -122,8 +119,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional(readOnly = true)
+    @PerformanceLog(logType = {PerformanceLogType.TIME})
     public String getAccessTokenByRefreshToken(AuthModel authModel) {
-        String key = BLACKLIST_TOKEN_KEY_PREFIX + REDIS_KEY_SEPARATOR + authModel.accessToken();
+        String key = RedisConstants.BLACKLIST_TOKEN_KEY_PREFIX + RedisConstants.REDIS_KEY_SEPARATOR + authModel.accessToken();
         if (redisCacheService.existsByKey(key)) {
             throw new BaseAuthenticationException(ErrorCode.AUTH_TOKEN_BLACKLISTED, "Token is blacklisted");
         }
@@ -136,7 +134,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 throw new BaseAuthenticationException(ErrorCode.AUTH_USER_NOT_FOUND, "User not found");
 
             UserAuthProjection user = userAuthWithPermissions.getFirst();
-            validateUserActiveStatus(user.getVerifiedAt(), user.getStatus());
+            validateUserActiveStatus(user.getVerifiedAt(), user.getUserStatus());
 
             RefreshToken refreshToken = refreshTokenRepository.findAccessTokenByUserId(user.getUserId()).orElse(null);
 
@@ -156,7 +154,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private String getRefreshToken(Boolean rememberMe, Long userId) {
         if (rememberMe == null || !rememberMe) {
-            return EMPTY_STRING;
+            return Constants.EMPTY_STRING;
         }
 
         RefreshToken refreshToken = refreshTokenRepository.findAccessTokenByUserId(userId).orElse(null);
@@ -194,11 +192,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         try {
             long expirationTime = jwtProvider.getExpirationTimeFromToken(token);
             long currentTime = System.currentTimeMillis();
-            long ttl = (expirationTime - currentTime) / 1000 + DEFAULT_BLACKLIST_TTL_OFFSET; // Add some buffer time
+            long ttl = (expirationTime - currentTime) / 1000 + DEFAULT_BLACKLIST_TTL_OFFSET;
 
             if (ttl > 0) {
-                String key = BLACKLIST_TOKEN_KEY_PREFIX + REDIS_KEY_SEPARATOR + token;
-                redisCacheService.saveOne(key, EMPTY_STRING, (int) ttl);
+                String key = RedisConstants.BLACKLIST_TOKEN_KEY_PREFIX + RedisConstants.REDIS_KEY_SEPARATOR + token;
+                redisCacheService.saveOne(key, Constants.EMPTY_STRING, (int) ttl);
             }
         } catch (Exception e) {
             log.error("Error blacklisting token: {}", e.getMessage());

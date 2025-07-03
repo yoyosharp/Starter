@@ -42,7 +42,6 @@ public class DemoController extends BaseController {
 
     @GetMapping("/with-authentication")
     @HasPermission(module = "00_GLOBAL", functionName = "MANAGE", level = PermissionLevel.Read_Write)
-    @PerformanceLog(logType = {PerformanceLogType.TIME, PerformanceLogType.MEMORY})
     public ResponseEntity<?> demoWithAuthentication() {
         return getSuccess();
     }

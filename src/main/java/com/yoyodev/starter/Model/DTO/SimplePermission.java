@@ -9,6 +9,6 @@ public record SimplePermission(String name,
                                PermissionLevel level,
                                EnabledStatus isEnabled) {
     public String getEffectiveName() {
-        return moduleId + ":" + functionId;
+        return moduleId + ":" + functionId + ":" + level + ":" + isEnabled;
     }
 }

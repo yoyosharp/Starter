@@ -8,7 +8,7 @@ public interface UserAuthProjection {
 
     String getUsername();
 
-    Integer getStatus();
+    Integer getUserStatus();
 
     Timestamp getVerifiedAt();
 
@@ -16,7 +16,9 @@ public interface UserAuthProjection {
 
     String getFunctionId();
 
-    Integer getLevel();
+    Integer getPermissionLevel();
+
+    String getPermissionName();
 
     Integer getEnabledFlag();
 }

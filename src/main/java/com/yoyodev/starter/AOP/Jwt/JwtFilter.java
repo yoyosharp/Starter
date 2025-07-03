@@ -3,6 +3,7 @@ package com.yoyodev.starter.AOP.Jwt;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.proc.BadJWTException;
 import com.yoyodev.starter.AOP.Cache.RedisCacheService;
+import com.yoyodev.starter.Common.Constants.RedisConstants;
 import com.yoyodev.starter.Common.Enumeration.ErrorCode;
 import com.yoyodev.starter.Exception.BaseAuthenticationException;
 import com.yoyodev.starter.Exception.JwtVerificationException;
@@ -21,11 +22,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.yoyodev.starter.Common.Constants.RedisConstants.BLACKLIST_TOKEN_KEY_PREFIX;
-import static com.yoyodev.starter.Common.Constants.RedisConstants.REDIS_KEY_SEPARATOR;
 
 @Component
 @AllArgsConstructor
@@ -43,7 +42,7 @@ public class JwtFilter extends OncePerRequestFilter {
         System.out.println("Processing request " + request.getRequestURI());
         String token = getJwtFromRequest(request);
         try {
-            String key = BLACKLIST_TOKEN_KEY_PREFIX + REDIS_KEY_SEPARATOR + token;
+            String key = RedisConstants.BLACKLIST_TOKEN_KEY_PREFIX + RedisConstants.REDIS_KEY_SEPARATOR + token;
             if (redisCacheService.existsByKey(key)) {
                 throw new BaseAuthenticationException(ErrorCode.AUTH_TOKEN_BLACKLISTED, "Token is blacklisted");
             }
@@ -58,7 +57,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
-        } catch (JOSEException | BadJWTException | JwtVerificationException e) {
+        } catch (JOSEException | BadJWTException | ParseException | JwtVerificationException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write(e.getMessage());
             response.getWriter().flush();

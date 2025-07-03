@@ -31,8 +31,8 @@ public class GrantedPermission implements GrantedAuthority {
         return permission.level();
     }
 
-    public boolean hasPrivilege(PermissionLevel level) {
-        return permission.level().getValue() >= level.getValue();
+    public boolean hasPrivilege(PermissionLevel targetLevel) {
+        return permission.level().getValue() >= targetLevel.getValue();
     }
 
     public boolean isEnabled() {

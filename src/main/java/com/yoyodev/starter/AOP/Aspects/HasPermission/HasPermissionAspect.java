@@ -52,7 +52,7 @@ public class HasPermissionAspect {
                     hasPermission.module(),
                     hasPermission.functionName(),
                     hasPermission.level());
-            throw new BaseAuthenticationException(ErrorCode.AUTH_NOT_AUTHORIZED, "No permission");
+            throw new BaseAuthenticationException(ErrorCode.AUTH_NOT_AUTHORIZED, "Corresponding permission is required");
         }
 
         return joinPoint.proceed();

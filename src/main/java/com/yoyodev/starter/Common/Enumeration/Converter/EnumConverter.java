@@ -1,6 +1,7 @@
 package com.yoyodev.starter.Common.Enumeration.Converter;
 
 import com.yoyodev.starter.Common.Enumeration.TransformableEnum;
+import com.yoyodev.starter.Exception.InvalidStoredEnumValueException;
 
 import java.util.Arrays;
 
@@ -9,6 +10,6 @@ public class EnumConverter {
         return Arrays.stream(enumClass.getEnumConstants())
                 .filter(enumValue -> enumValue.getValue().equals(value))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new InvalidStoredEnumValueException("Invalid value for enum class: " + enumClass.getSimpleName() + ", value: " + value));
     }
 }
