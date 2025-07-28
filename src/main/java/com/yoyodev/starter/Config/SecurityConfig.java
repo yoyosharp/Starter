@@ -29,10 +29,12 @@ public class SecurityConfig {
     private final String[] publicEndpoints = {
             EndpointConstants.API_V1_AUTH + "/**",
             EndpointConstants.API_V1 + "/demo/no-authentication",
+            "/oauth2/**",
+            "/login/oauth2/**",
             "/error"
     };
     private final JwtFilter jwtFilter;
-//    private final JwtEntryPoint authenticationEntryPoint;
+    private final OAuth2Config oauth2Config;
 
     @Bean
     @Order(1)
@@ -59,9 +61,13 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
-                        .anyRequest().authenticated())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-//                .exceptionHandling(handler -> handler.authenticationEntryPoint(authenticationEntryPoint));
+                        .anyRequest().authenticated());
+
+        // Configure OAuth2 login
+        oauth2Config.configureOAuth2Login(http);
+
+        // Add JWT filter
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

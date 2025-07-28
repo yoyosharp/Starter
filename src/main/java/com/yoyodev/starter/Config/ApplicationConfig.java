@@ -4,10 +4,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.yoyodev.starter.AOP.Jwt.JwtFilter;
 import com.yoyodev.starter.AOP.Logging.CustomAuditingFilter;
+import org.springframework.context.MessageSource;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.Ordered;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
@@ -26,9 +28,9 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public FilterRegistrationBean<CustomAuditingFilter> auditingFilter() {
+    public FilterRegistrationBean<CustomAuditingFilter> auditingFilter(MessageSource messageSource) {
         FilterRegistrationBean<CustomAuditingFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new CustomAuditingFilter());
+        registration.setFilter(new CustomAuditingFilter(messageSource));
         registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return registration;
     }
@@ -53,6 +55,7 @@ public class ApplicationConfig {
     }
 
     @Bean(name = "normal-serializer")
+    @Primary
     public Gson normalSerializer() {
         return new GsonBuilder()
                 .setPrettyPrinting()

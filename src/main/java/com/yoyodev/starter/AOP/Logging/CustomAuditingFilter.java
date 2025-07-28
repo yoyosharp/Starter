@@ -7,7 +7,10 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
@@ -18,7 +21,17 @@ import java.util.Arrays;
 import java.util.UUID;
 
 @Slf4j
+@AllArgsConstructor
 public class CustomAuditingFilter extends OncePerRequestFilter {
+    private final MessageSource messageSource;
+
+    protected String getMessage(String code) {
+        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+    }
+
+    protected String getMessage(String code, Object... args) {
+        return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
+    }
 
     @Override
     protected void doFilterInternal(@Nonnull HttpServletRequest request,
@@ -59,9 +72,9 @@ public class CustomAuditingFilter extends OncePerRequestFilter {
             int status = wrappedResponse.getStatus();
             String logMessage = "Request [{}] {} with status: {}";
             if (status < 200 || status > 299) {
-                log.warn(logMessage, requestId, "failed", status);
+                log.warn(logMessage, requestId, getMessage("common.failed"), status);
             } else {
-                log.info(logMessage, requestId, "completed", status);
+                log.info(logMessage, requestId, getMessage("common.success"), status);
             }
             wrappedResponse.copyBodyToResponse();
         }

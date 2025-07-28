@@ -36,4 +36,7 @@ public class User extends AbstractAuditEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserPermission> userPermissions = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserOAuth2Provider> oauth2Providers = new HashSet<>();
 }

@@ -6,7 +6,7 @@ spring.security.user.password=
 
 # Datasource properties
 spring.datasource.driver-class-name=org.postgresql.Driver
-spring.datasource.url=jdbc:postgresql://localhost:5432/base
+spring.datasource.url=jdbc:postgresql://localhost:5432/starter
 spring.datasource.username=
 spring.datasource.password=
 spring.datasource.hikari.maximum-pool-size=10
@@ -15,11 +15,14 @@ spring.datasource.hikari.connection-timeout=60000
 # Sql queries logging
 spring.jpa.show-sql=true
 
+#AOP
+logging.level.org.springframework.aop=DEBUG
+
 # Gmail properties
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
 spring.mail.username=
-spring.mail.password=t
+spring.mail.password=
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 
@@ -33,21 +36,35 @@ app.hashing.iv=
 
 # Security
 logging.level.org.springframework.security=info
+spring.security.oauth2.client.registration.google.client-id=${GOOGLE_CLIENT_ID:your-google-client-id}
+spring.security.oauth2.client.registration.google.client-secret=${GOOGLE_CLIENT_SECRET:your-google-client-secret}
+spring.security.oauth2.client.registration.google.scope=email,profile
+spring.security.oauth2.client.registration.google.redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
+# GitHub OAuth2 client properties
+spring.security.oauth2.client.registration.github.client-id=${GITHUB_CLIENT_ID:your-github-client-id}
+spring.security.oauth2.client.registration.github.client-secret=${GITHUB_CLIENT_SECRET:your-github-client-secret}
+spring.security.oauth2.client.registration.github.scope=user:email,read:user
+spring.security.oauth2.client.registration.github.redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
+# OAuth2 provider endpoints
+spring.security.oauth2.client.provider.github.authorization-uri=https://github.com/login/oauth/authorize
+spring.security.oauth2.client.provider.github.token-uri=https://github.com/login/oauth/access_token
+spring.security.oauth2.client.provider.github.user-info-uri=https://api.github.com/user
 
 #RabbitMQ
-spring.rabbitmq.host=localhostspring.rabbitmq.port=5672
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
 spring.rabbitmq.username=
 spring.rabbitmq.password=
 spring.rabbitmq.virtual-host=/
 
 #Gmail
-application.defaultMailClient=
+application.defaultMailClient=GmailByJavaMailer
 application.google.credentials.json=
 
 #Redis
 spring.cache.type=redis
-spring.data.redis.host=
-spring.data.redis.port=
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
 spring.data.redis.password=
 
 #Aws
@@ -62,5 +79,21 @@ springdoc.swagger-ui.path=/swagger-ui
 #Security
 jwt.rsa.path.private-key=D:\\Key\\starter\\private_key.pem
 jwt.rsa.path.public-key=D:\\Key\\starter\\public_key.pem
-jwt.expiration-time-in-second=864000
-jwt.clock-skew-in-second=300
+jwt.expiration-time-in-seconds=3600
+jwt.clock-skew-in-seconds=300
+jwt.refresh-token.expiration-time-in-days=30
+
+#flyway
+spring.flyway.enabled=false
+spring.flyway.locations=classpath:db/migration
+spring.flyway.baseline-on-migrate=true
+spring.flyway.baseline-version=0
+spring.flyway.clean-disabled=true
+spring.flyway.validate-on-migrate=true
+spring.flyway.schemas=public
+
+# Internationalization
+spring.messages.basename=i18n/messages
+spring.messages.encoding=UTF-8
+spring.messages.cache-duration=3600
+spring.messages.fallback-to-system-locale=false
